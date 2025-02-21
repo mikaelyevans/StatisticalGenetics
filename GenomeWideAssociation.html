@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -68,7 +102,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="background-information">Background Information</h2>
 <p>The human genome is very fascinating! The genome consists of all of a person’s DNA, and scientists have been studying it for many years. Across all humans, our DNA is very similar, but there are certain regions on the genome that are known to differ from person to person. These regions are called <strong>genetic variants</strong> and they are useful in studying what makes us genetically different from one another. There are multiple types of genetic variants, but Genome-Wide Association Studies use <strong>Single Nucleotide Variants</strong>, or SNVs, which are single nucleotide changes in the DNA sequence. These genetic variants can give scientists insights into a person’s inherited traits, diseases, and ancestry.<br>
 <br>
-<strong>Genome-Wide Association Studies</strong>, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at one SNV on the genome of <em>cases</em> (people expressing the trait of interest) and <em>controls</em> (people without the trait of interest) to declare if the nucleotides at that position are associated with posession of the trait of interest. Once scientists have identified genetic variants that <strong>are</strong> associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be <strong>life saving</strong> when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.<br>
+<strong>Genome-Wide Association Studies</strong>, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at <strong>Single Nucleotide Polymorphisms</strong>, or SNPs, on the genome of <em>cases</em> (people expressing the trait of interest) and <em>controls</em> (people without the trait of interest) to declare if the nucleotides at that position are associated with possession of the trait of interest. SNPs differ from SNVs because they represent a variation that is present in at least 1% of the population. Once scientists have identified genetic variants that <strong>are</strong> associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be <strong>life saving</strong> when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.<br>
 <br>
 The supplementary article <a href="https://www.nature.com/articles/nature05911">Genome-Wide Association Study of 14,000 Cases of Seven Common Diseases and 3,000 Shared Controls (Nature)</a> was an innovative paper that defined common protocols for implementing GWAS for scientific studies. This paper is a foundation of the GWAS and was made possible by developments in DNA sequencing, allowing the analysis of 500,000 SNVs per individual.</p>
 </section>
@@ -81,7 +115,209 @@ The supplementary article <a href="https://www.nature.com/articles/nature05911">
 </section>
 <section id="marginal-regression" class="level2">
 <h2 class="anchored" data-anchor-id="marginal-regression">Marginal Regression</h2>
-<p>Since we are unable to use multiple linear regression on all the data points, we can use a marginal regression that looks at each SNV one at a time.</p>
+<p>Since we are unable to use multiple linear regression on all the data points, we can use a marginal regression that looks at each SNV one at a time. The code will walk you through how to run this marginal regression on 165 individuals. Enjoy!</p>
+<section id="set-up" class="level3">
+<h3 class="anchored" data-anchor-id="set-up">Set Up</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(snpStats)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(qqman)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The genetic data that we will use for this tutorial contain real genotype information and a simulated binary phenotype for 165 individuals of European ancestry from the <a href="https://www.genome.gov/10001688/international-hapmap-project">International HapMap Project (“HapMap”)</a>. This data was used to write a <a href="https://github.com/MareesAT/GWA_tutorial/">tutorial</a> on how to conduct a genome-wide association study by researchers in the Netherlands and France.<br>
+<br>
+This zip file contains three files <code>HapMap_3_r3_1.bed</code>, <code>HapMap_3_r3_1.bim</code>, and <code>HapMap_3_r3_1.fam</code> that store genetic data. <code>HapMap_3_r3_1.bed</code> stores genotypes for individuals in this study, <code>HapMap_3_r3_1.bim</code> stores SNP information, and <code>HapMap_3_r3_1.fam</code> file contains other information about the individuals in the study.<br>
+</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bed <span class="ot">&lt;-</span> <span class="st">'DataFiles/1_QC_GWAS/HapMap_3_r3_1.bed'</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>bim <span class="ot">&lt;-</span> <span class="st">'DataFiles/1_QC_GWAS/HapMap_3_r3_1.bim'</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>fam <span class="ot">&lt;-</span> <span class="st">'DataFiles/1_QC_GWAS/HapMap_3_r3_1.fam'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: this might take a minute or two</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>hapmap <span class="ot">&lt;-</span> <span class="fu">read.plink</span>(bed, bim, fam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, the hapmap data object contains the three data files as described above.</p>
+</section>
+<section id="minor-allele-frequency-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="minor-allele-frequency-analysis">Minor Allele Frequency Analysis</h3>
+<p>First, we will begin by assessing minor allele frequency for each SNP.</p>
+<p>Add the MAF to the hapmap data oject.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>maf <span class="ot">&lt;-</span> <span class="fu">col.summary</span>(hapmap<span class="sc">$</span>genotypes)<span class="sc">$</span>MAF</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># add new MAF variable </span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>hapmap<span class="sc">$</span>map <span class="ot">&lt;-</span> hapmap<span class="sc">$</span>map <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">MAF =</span> maf)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># look at SNP info again</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(hapmap<span class="sc">$</span>map)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           chromosome   snp.name cM position allele.1 allele.2        MAF
+rs2185539           1  rs2185539 NA   556738        T        C 0.00000000
+rs11510103          1 rs11510103 NA   557616        G        A 0.00621118
+rs11240767          1 rs11240767 NA   718814        T        C 0.00000000
+rs3131972           1  rs3131972 NA   742584        A        G 0.15757576
+rs3131969           1  rs3131969 NA   744045        A        G 0.13030303
+rs1048488           1  rs1048488 NA   750775        C        T 0.15853659</code></pre>
+</div>
+</div>
+<p>Do you notice that both the first and third SNPs in this data set have a MAF equal to 0? This means that in these SNPs, <strong>all</strong> individuals are homozygous for the major allele. Since the minor allele is not present at all in the study population, this is not an effective SNP because all individuals possess the same allele.</p>
+</section>
+<section id="reformat-data-for-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="reformat-data-for-analysis">Reformat Data for Analysis</h3>
+<p>The <code>snpStats</code> package uses a unique format to store data. Currently, genotypes are coded as 01, 02, and 03 (with 00 representing missing values).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># look at first five rows/columns</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>hapmap<span class="sc">$</span>genotypes<span class="sc">@</span>.Data[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        rs2185539 rs11510103 rs11240767 rs3131972 rs3131969
+NA06989        03         03         03        02        02
+NA11891        03         03         03        02        03
+NA11843        03         03         03        03        03
+NA12341        03         03         03        02        02
+NA12739        03         03         03        03        03</code></pre>
+</div>
+</div>
+<p>The packages that we use for analysis require us to reformat this into 0’s, 1’s, 2’s, and NA’s.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># what type of object is hapmap$genotypes</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(hapmap<span class="sc">$</span>genotypes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "SnpMatrix"
+attr(,"package")
+[1] "snpStats"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># convert from "SnpMatrix" to "numeric"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">as</span>(hapmap<span class="sc">$</span>genotypes, <span class="st">"numeric"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># what type of object do we have now </span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "matrix" "array" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># look at first five rows/columns to confirm conversion looks ok</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>X[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        rs2185539 rs11510103 rs11240767 rs3131972 rs3131969
+NA06989         2          2          2         1         1
+NA11891         2          2          2         1         2
+NA11843         2          2          2         2         2
+NA12341         2          2          2         1         1
+NA12739         2          2          2         2         2</code></pre>
+</div>
+</div>
+<p>Now, your data is reformatted and ready for more analysis!</p>
+</section>
+<section id="trait-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="trait-simulation">Trait Simulation</h3>
+<p>In research, it is very common for scientists to analyze <strong>experimental</strong> data because it gives scientists the power of analyzing a changing independent variable. In genetics, however, genetic data is collected from <strong>observational</strong> studies that do not have the same changing independent variable (because implementing disease inheritance to babies would not be ethical).</p>
+<p>Instead of only relying on observational data, scientists often use <strong>simulations</strong> to gain power in interpretation of genetic data. Simulations are a very helpful tool because it gives scientists the power to control the data by assigning controls and cases. The idea behind simulations is that scientists can assign <em>cases</em> to observations that would typically be considered <em>controls</em> and test them by performing statistical methods. If the <em>false</em> cases are being identified as <em>true</em> and <em>significant</em> by the statistical method, then the scientist can exclude this method from further analysis because it is not producing accurate results.<br>
+<br>
+In our data set, the genotype data is <em>real</em>, but the phenotype data is <em>simulated</em>.<br>
+<br>
+To show you how to simulate these phenotypic traits, we will show an example of a trait that depends on the SNP known as <em>rs2476601</em>.<br>
+<br>
+Research has identified this SNP as a genetic variant that is strongly associated with autoimmune diseases like type 1 diabetes, rheumatoid arthritis and systemic lupus erythematosus. Its minor allele is associated with autoimmunity and alters immune cell composition and function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>hapmap<span class="sc">$</span>map <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(snp.name <span class="sc">==</span> <span class="st">'rs2476601'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          chromosome  snp.name cM  position allele.1 allele.2       MAF
+rs2476601          1 rs2476601 NA 114179091        A        G 0.1196319</code></pre>
+</div>
+</div>
+<p>Now, we will create a quantitative trait <code>y</code> that depends on the genotype at this SNP plus some random noise. It is important to include random noise in this simulation because real genetic data is imperfect, there are mutations that alter the DNA sequence. For this example, we will assign this SNP an “effect size” of 2: for every additional copy of the minor allele that an individual carries, their trait value will increase by 2 units (plus or minus some random noise).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate trait</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">494</span>) <span class="co"># set seed for reproducibility</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X) <span class="co"># calculate the number of individuals </span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> X[,<span class="st">'rs2476601'</span>] <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">1</span>) <span class="co"># y = 2 * x + e</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># look at the first few simulated trait values</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  NA06989   NA11891   NA11843   NA12341   NA12739   NA10850 
+0.2082684 3.6267809 3.3422648 1.1696396 3.9450827 4.8350451 </code></pre>
+</div>
+</div>
+<p>We have designed this simulation so that the trait <code>y</code> depends on the causal SNP, rs2476601, and nothing else. We can use this truth to assess the performance of our statistical methods in the Genome-Wide Association Study.</p>
+</section>
+<section id="genome-wide-association-study" class="level3">
+<h3 class="anchored" data-anchor-id="genome-wide-association-study">Genome-Wide Association Study</h3>
+<p>First, we need to clean the data to remove the ineffective monomorphic SNPs:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># keep only those SNPs with MAF &gt; 0</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>map.clean <span class="ot">&lt;-</span> hapmap<span class="sc">$</span>map <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(MAF <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, we need to remove these monomorphic SNPs from our genotype matrix (<code>X</code>).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create vector of which SNPs have a MAF of 0</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>monomorphic <span class="ot">&lt;-</span> <span class="fu">which</span>(maf <span class="sc">==</span> <span class="dv">0</span>) </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(monomorphic) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  1  3 10 11 12 17</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># remove columns in the monomorphic vector</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>X.clean <span class="ot">&lt;-</span> X[,<span class="sc">-</span>monomorphic]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Check to make sure that you removed the correct amount of SNPs from the data:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># your code here</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(X.clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]     165 1283751</code></pre>
+</div>
+</div>
+<p>For the purpose of this content summary, we will complete the same procedure as a GWAS, but limit the SNPs to only those that exist on the second chromosome to reduce computing time.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>chr2.snps <span class="ot">&lt;-</span> <span class="fu">which</span>(map.clean<span class="sc">$</span>chromosome <span class="sc">==</span> <span class="dv">2</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(chr2.snps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 103647 103648 103649 103650 103651 103652</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(chr2.snps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 105075</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co">: this will take a while to run</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| cache: true</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># set up empty vectors for storing results</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>betas <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>ses <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>tstats <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>pvals <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co"># loop through chromosome 2 SNPs</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> chr2.snps){</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print out occasional updates telling us what SNP we're analyzing</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(i <span class="sc">%%</span> <span class="dv">10000</span> <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">'Analyzing SNP'</span>, i)) </span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit model</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> X.clean[,i])</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get coefficient information</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>  coefinfo <span class="ot">&lt;-</span> <span class="fu">tidy</span>(mod)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># record estimate, SE, test stat, and p-value</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>  betas[i] <span class="ot">&lt;-</span> coefinfo<span class="sc">$</span>estimate[<span class="dv">2</span>]</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  ses[i] <span class="ot">&lt;-</span> coefinfo<span class="sc">$</span>std.error[<span class="dv">2</span>]</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>  tstats[i] <span class="ot">&lt;-</span> coefinfo<span class="sc">$</span>statistic[<span class="dv">2</span>]</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  pvals[i] <span class="ot">&lt;-</span> coefinfo<span class="sc">$</span>p.value[<span class="dv">2</span>]</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Analyzing SNP 110000"
+[1] "Analyzing SNP 120000"
+[1] "Analyzing SNP 130000"
+[1] "Analyzing SNP 140000"
+[1] "Analyzing SNP 150000"
+[1] "Analyzing SNP 160000"
+[1] "Analyzing SNP 170000"
+[1] "Analyzing SNP 180000"
+[1] "Analyzing SNP 190000"
+[1] "Analyzing SNP 200000"</code></pre>
+</div>
+</div>
+</section>
 </section>
 </section>
 

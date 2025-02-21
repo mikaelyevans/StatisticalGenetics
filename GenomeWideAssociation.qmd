@@ -9,7 +9,7 @@ format: html
 The human genome is very fascinating! The genome consists of all of a person's DNA, and scientists have been studying it for many years. Across all humans, our DNA is very similar, but there are certain regions on the genome that are known to differ from person to person. These regions are called **genetic variants** and they are useful in studying what makes us genetically different from one another. There are multiple types of genetic variants, but Genome-Wide Association Studies use **Single Nucleotide Variants**, or SNVs, which are single nucleotide changes in the DNA sequence. These genetic variants can give scientists insights into a person's inherited traits, diseases, and ancestry.
 \
 \
-**Genome-Wide Association Studies**, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at one SNV on the genome of *cases* (people expressing the trait of interest) and *controls* (people without the trait of interest) to declare if the nucleotides at that position are associated with posession of the trait of interest. Once scientists have identified genetic variants that **are** associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be **life saving** when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.
+**Genome-Wide Association Studies**, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at **Single Nucleotide Polymorphisms**, or SNPs, on the genome of *cases* (people expressing the trait of interest) and *controls* (people without the trait of interest) to declare if the nucleotides at that position are associated with possession of the trait of interest. SNPs differ from SNVs because they represent a variation that is present in at least 1% of the population. Once scientists have identified genetic variants that **are** associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be **life saving** when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.
 \
 \
 The supplementary article [Genome-Wide Association Study of 14,000 Cases of Seven Common Diseases and 3,000 Shared Controls (Nature)](https://www.nature.com/articles/nature05911) was an innovative paper that defined common protocols for implementing GWAS for scientific studies. This paper is a foundation of the GWAS and was made possible by developments in DNA sequencing, allowing the analysis of 500,000 SNVs per individual.
@@ -20,6 +20,233 @@ The supplementary article [Genome-Wide Association Study of 14,000 Cases of Seve
 As mentioned in the introduction, genetic data is **BIG** data. Since there are more variables than data points in the data set, it is not possible to use multiple linear regression to analyze association of genetic variants and traits of interest. There is a lot of math that can explain why multiple linear regression doesn't work, but for the sake of this content summary, you are spared from that.
 
 ## Marginal Regression
-Since we are unable to use multiple linear regression on all the data points, we can use a marginal regression that looks at each SNV one at a time. The code will walk you through how to run this marginal regression on xxx individuals. Enjoy!
+Since we are unable to use multiple linear regression on all the data points, we can use a marginal regression that looks at each SNV one at a time. The code will walk you through how to run this marginal regression on 165 individuals. Enjoy!
+
+### Set Up
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r install-from-cran, include=FALSE, message=FALSE}
+#| eval: false
+install.packages(c('tidyverse', 'broom', 'qqman'))
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("snpStats")
+```
+
+```{r load-packages}
+#| message: false
+library(snpStats)
+library(tidyverse)
+library(broom)
+library(qqman)
+```
+
+The genetic data that we will use for this tutorial contain real genotype information and a simulated binary phenotype for 165 individuals of European ancestry from the [International HapMap Project ("HapMap")](https://www.genome.gov/10001688/international-hapmap-project). This data was used to write a [tutorial](https://github.com/MareesAT/GWA_tutorial/) on how to conduct a genome-wide association study by researchers in the Netherlands and France.
+\
+\
+This zip file contains three files `HapMap_3_r3_1.bed`, `HapMap_3_r3_1.bim`, and `HapMap_3_r3_1.fam` that store genetic data. `HapMap_3_r3_1.bed` stores genotypes for individuals in this study, `HapMap_3_r3_1.bim` stores SNP information, and `HapMap_3_r3_1.fam` file contains other information about the individuals in the study.
+\
+```{r file-paths}
+bed <- 'DataFiles/1_QC_GWAS/HapMap_3_r3_1.bed'
+bim <- 'DataFiles/1_QC_GWAS/HapMap_3_r3_1.bim'
+fam <- 'DataFiles/1_QC_GWAS/HapMap_3_r3_1.fam'
+```
+
+```{r read-data}
+#| cache: true
+# NOTE: this might take a minute or two
+hapmap <- read.plink(bed, bim, fam)
+```
+
+Now, the hapmap data object contains the three data files as described above. 
+
+### Minor Allele Frequency Analysis
+
+First, we will begin by assessing minor allele frequency for each SNP.
+
+Add the MAF to the hapmap data oject.
+```{r add-MAF-to-SNP-info}
+maf <- col.summary(hapmap$genotypes)$MAF
+# add new MAF variable 
+hapmap$map <- hapmap$map %>%
+  mutate(MAF = maf)
+
+# look at SNP info again
+head(hapmap$map)
+```
+Do you notice that both the first and third SNPs in this data set have a MAF equal to 0? This means that in these SNPs, **all** individuals are homozygous for the major allele. Since the minor allele is not present at all in the study population, this is not an effective SNP because all individuals possess the same allele.
+
+### Reformat Data for Analysis
+
+The `snpStats` package uses a unique format to store data. Currently, genotypes are coded as 01, 02, and 03 (with 00 representing missing values).
+
+```{r look-at-genotypes}
+# look at first five rows/columns
+hapmap$genotypes@.Data[1:5,1:5]
+```
+
+
+The packages that we use for analysis require us to reformat this into 0's, 1's, 2's, and NA's.
+
+```{r reformat-genotypes}
+# what type of object is hapmap$genotypes
+class(hapmap$genotypes)
+
+# convert from "SnpMatrix" to "numeric"
+X <- as(hapmap$genotypes, "numeric")
+
+# what type of object do we have now 
+class(X)
+
+# look at first five rows/columns to confirm conversion looks ok
+X[1:5, 1:5]
+```
+
+Now, your data is reformatted and ready for more analysis!
+
+
+### Trait Simulation
+
+In research, it is very common for scientists to analyze **experimental** data because it gives scientists the power of analyzing a changing independent variable. In genetics, however, genetic data is collected from **observational** studies that do not have the same changing independent variable (because implementing disease inheritance to babies would not be ethical). 
+  
+Instead of only relying on observational data, scientists often use **simulations** to gain power in interpretation of genetic data. Simulations are a very helpful tool because it gives scientists the power to control the data by assigning controls and cases. The idea behind simulations is that scientists can assign *cases* to observations that would typically be considered *controls* and test them by performing statistical methods. If the *false* cases are being identified as *true* and *significant* by the statistical method, then the scientist can exclude this method from further analysis because it is not producing accurate results.
+\
+\
+In our data set, the genotype data is *real*, but the phenotype data is *simulated*. 
+\
+\
+To show you how to simulate these phenotypic traits, we will show an example of a trait that depends on the SNP known as *rs2476601*. 
+\
+\
+Research has identified this SNP as a genetic variant that is strongly associated with autoimmune diseases like type 1 diabetes, rheumatoid arthritis and systemic lupus erythematosus. Its minor allele is associated with autoimmunity and alters immune cell composition and function. 
+
+```{r look-at-causal-SNP}
+hapmap$map %>%
+  filter(snp.name == 'rs2476601')
+```
+
+Now, we will create a quantitative trait `y` that depends on the genotype at this SNP plus some random noise. It is important to include random noise in this simulation because real genetic data is imperfect, there are mutations that alter the DNA sequence. For this example, we will assign this SNP an "effect size" of 2: for every additional copy of the minor allele that an individual carries, their trait value will increase by 2 units (plus or minus some random noise). 
+
+```{r simulate-trait}
+# simulate trait
+set.seed(494) # set seed for reproducibility
+n <- nrow(X) # calculate the number of individuals 
+y <- 2 * X[,'rs2476601'] + rnorm(n, 0, 1) # y = 2 * x + e
+
+# look at the first few simulated trait values
+head(y)
+```
+
+We have designed this simulation so that the trait `y` depends on the causal SNP, rs2476601, and nothing else. We can use this truth to assess the performance of our statistical methods in the Genome-Wide Association Study.
+
+
+
+### Genome-Wide Association Study
+
+First, we need to clean the data to remove the ineffective monomorphic SNPs:
+```{r remove-mono-from-map}
+# keep only those SNPs with MAF > 0
+map.clean <- hapmap$map %>%
+  filter(MAF > 0)
+```
+
+Now, we need to remove these monomorphic SNPs from our genotype matrix (`X`).  
+```{r remove-mono-from-genotypes}
+# create vector of which SNPs have a MAF of 0
+monomorphic <- which(maf == 0) 
+head(monomorphic) 
+
+# remove columns in the monomorphic vector
+X.clean <- X[,-monomorphic]
+```
+
+Check to make sure that you removed the correct amount of SNPs from the data:
+```{r check-dimensions}
+dim(X.clean)
+```
+
+For the purpose of this content summary, we will complete the same procedure as a GWAS, but limit the SNPs to only those that exist on the first chromosome to reduce computing time. 
+
+```{r find-chr1-snps}
+chr1.snps <- which(map.clean$chromosome == 1)
+head(chr1.snps)
+length(chr1.snps)
+```
+
+
+To analyze all the SNPs on chromosome 1, we can write a loop to fit a linear regression model at each SNP. 
+For each SNP model, we'll record the estimates (`betas`), standard errors (`ses`), test statistics (`tstats`) and p-values (`pvals`) for the coefficient of interest (the slope). 
+
+```{r run-gwas-chr1}
+# NOTE: this will take awhile to run and render
+#| cache: true
+# set up empty vectors for storing results
+betas <- c()
+ses <- c()
+tstats <- c()
+pvals <- c()
+
+# loop through chromosome 1 SNPs
+for(i in chr1.snps){
+  # print out occasional updates telling us what SNP we're analyzing
+  if(i %% 10000 == 0) print(paste('Analyzing SNP', i)) 
+  # fit model
+  mod <- lm(y ~ X.clean[,i])
+  # get coefficient information
+  coefinfo <- tidy(mod)
+  # record estimate, SE, test stat, and p-value
+  betas[i] <- coefinfo$estimate[2]
+  ses[i] <- coefinfo$std.error[2]
+  tstats[i] <- coefinfo$statistic[2]
+  pvals[i] <- coefinfo$p.value[2]
+}
+```
+
+Now, we need to add the results of this marginal regression to our map data frame that contains information about each SNP.
+
+```{r chr1-results}
+# start with the map info for the chr 1 SNPs
+chr1.results <- map.clean %>%
+  filter(chromosome == 1)
+
+# then add betas, SEs, etc.
+chr1.results <- chr1.results %>%
+  mutate(Estimate = betas,
+         Std.Error = ses,
+         Test.Statistic = tstats,
+         P.Value = pvals)
+
+# look at results
+head(chr1.results)
+```
+
+Finally, we can create a Manhattan Plot which shows the SNPs that are significantly associated with the trait of interest. To do this, we negative log-transform the y-axis to highlight the significant p-values. The closer a p-value is to 0, the more significant it is, but in a Manhattan plot, the higher on the y-axis a point is, the more significant it is.
+
+```{r plot-minus-log-pvals}
+# your code here
+chr1.results %>%
+  ggplot() +
+  geom_point(aes(x = position, y = -log10(P.Value)))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
