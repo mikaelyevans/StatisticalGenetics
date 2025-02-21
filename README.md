@@ -1,5 +1,5 @@
 <h1>Big Data in Statistical Genetics</h1>
-<p><strong>Created by Mikaely Evans</strong></p>
+<h3><strong>Created by Mikaely Evans</strong></h3>
 
 <p><strong>This GitHub repository contains a content summary of the Big Data unit in Statistical Genetics with Professor Kelsey Grinde.</strong></p>
 
