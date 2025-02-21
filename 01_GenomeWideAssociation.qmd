@@ -222,7 +222,7 @@ chr1.results <- chr1.results %>%
 head(chr1.results)
 ```
 
-Finally, we can create a Manhattan Plot which shows the SNPs that are significantly associated with the trait of interest. To do this, we negative log-transform the y-axis to highlight the significant p-values. The closer a p-value is to 0, the more significant it is, but in a Manhattan plot, the higher on the y-axis a point is, the more significant it is.
+Finally, we can create a Manhattan Plot which shows the SNPs that are significantly associated with the trait of interest. Manhattan plots are very common in statistical genetics and are created by negative log-transforming the y-axis to highlight p-values that are significant. Manhattan plots represent the significant p-values higher on the y-axis, making them easier to read, yet counter-intuitive since the more significant a p-value is, the closer it is to zero.
 
 ```{r plot-minus-log-pvals}
 # your code here
@@ -231,7 +231,11 @@ chr1.results %>%
   geom_point(aes(x = position, y = -log10(P.Value)))
 ```
 
+To interpret this plot, we see only one spike signifying one significant peak in chromosome 1. This makes sense given wheat we know about the **truth** in this simulated scenario because we would be expecting to find **no significance** since the cases were artificially assigned. Out of all the SNPs on chromosome 1, only having one significant type 1 error bodes well for the results of the GWAS. 
 
+### Conclusion
+
+You now have the skills to implement a Genome-Wide Association Study and plot your findings! In order to implement this on all chromosomes, follow the same code, but do not filter to only select SNPs on chromosome 1. This will allow you to loop through all the SNPs on all the chromosomes and may take up to 30 minutes to run!
 
 
 
