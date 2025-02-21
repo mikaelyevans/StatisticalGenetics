@@ -42,6 +42,14 @@
 </ol>
 <p>Once these steps are complete, congratulate yourself on gaining these new skills!</p>
 
+<h3>Important Terminology</h3>
+<ul>
+    <li>Nucleotide - structural unit of DNA</li>
+    <li>Gene - a sequence of nucleotides that construct proteins that make up people</li>
+    <li>Chromosome - a unit of many genes that are inherited from parents, people have 23 pairs of them</li>
+    <li>Genome - the entirety of all of the genes in all the chromosomes of a person</li>
+</ul>
+
 
 
 
