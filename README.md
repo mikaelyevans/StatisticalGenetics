@@ -20,7 +20,7 @@
 
 <h3>Topics Covered</h3>
 <ul>
-    <li>Genome-Wide Association Studies</li>
+    <li>Genome Wide Association Studies</li>
     <li>Multiple Testing</li>
 </ul>
 
