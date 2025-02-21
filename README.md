@@ -14,13 +14,13 @@
 <p>    
     Analyzing genetic data of humans is important because it can give us insights into disease inheritance, ancestry relationships, and
     physical traits. This content summary explains the approaches that scientists use to analyze <strong>BIG</strong> genetic data and why they are effective.
-    There are also demo examples for implementing Genome Wide Association Studies and adjusting for Multiple Testing while working with genetic
+    There are also demo examples for implementing Genome-Wide Association Studies and adjusting for Multiple Testing while working with genetic
     data. <strong>Get ready to GWAS!</strong>
 </p>
 
 <h3>Topics Covered</h3>
 <ul>
-    <li>Genome Wide Association Studies</li>
+    <li>Genome-Wide Association Studies</li>
     <li>Multiple Testing</li>
 </ul>
 
