@@ -37,8 +37,8 @@
             Statistical Significance in Whole-Genome Sequencing-Based Association Studies (Genetic Epidemiology)</a></li>
         </ul>
     </li>
-    <li>Read and run <strong>GenomeWideAssociation.qmd</strong></li>
-    <li>Read and run <strong>MultipleTesting.qmd</strong></li>
+    <li>Read and run <strong>01_GenomeWideAssociation.qmd</strong></li>
+    <li>Read and run <strong>02_MultipleTesting.qmd</strong></li>
 </ol>
 <p>Once these steps are complete, congratulate yourself on gaining these new skills!</p>
 
