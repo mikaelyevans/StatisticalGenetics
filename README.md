@@ -1,19 +1,19 @@
 <h1>Big Data in Statistical Genetics</h1>
-<p>**Created by Mikaely Evans**</p>
+<p><strong>Created by Mikaely Evans</strong></p>
 
-<p>**This GitHub repository contains a content summary of the Big Data unit in Statistical Genetics with Professor Kelsey Grinde.**</p>
+<p><strong>This GitHub repository contains a content summary of the Big Data unit in Statistical Genetics with Professor Kelsey Grinde.</strong></p>
 
 <h3>What is Big Data?</h3>
 <p>
     Big data is defined as any data set that contains more columns than rows of observations. 
-    In statistics, this is often referred to as the **p > n issue**, meaning the number of variables (columns) 
+    In statistics, this is often referred to as the <strong>p > n issue</strong>, meaning the number of variables (columns) 
     outnumbers the number of data points (rows) in the dataset. 
     Working with big data can be challenging because some traditional statistical models cannot be implemented effectively.
 </p>
 
 <p>    
     Analyzing genetic data of humans is important because it can give us insights into disease inheritance, ancestry relationships, and
-    physical traits. This content summary explains the approaches that scientists use to analyze **BIG** genetic data and why they are effective.
+    physical traits. This content summary explains the approaches that scientists use to analyze <strong>BIG</strong> genetic data and why they are effective.
     There are also demo examples for implementing Genome Wide Association Studies and adjusting for Multiple Testing while working with genetic
     data. Get ready to GWAS!
 </p>
