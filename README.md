@@ -1,7 +1,7 @@
 <h1>Big Data in Statistical Genetics</h1>
 <h3><strong>Created by Mikaely Evans</strong></h3>
 
-<p><strong>This GitHub repository contains a content summary of the Big Data unit in Statistical Genetics with Professor Kelsey Grinde.</strong></p>
+<p><strong>This GitHub repository contains a content summary of the Big Data unit in Statistical Genetics with Professor Kelsey Grinde at Macalester College.</strong></p>
 
 <h3>What is Big Data?</h3>
 <p>
@@ -15,7 +15,7 @@
     Analyzing genetic data of humans is important because it can give us insights into disease inheritance, ancestry relationships, and
     physical traits. This content summary explains the approaches that scientists use to analyze <strong>BIG</strong> genetic data and why they are effective.
     There are also demo examples for implementing Genome Wide Association Studies and adjusting for Multiple Testing while working with genetic
-    data. Get ready to GWAS!
+    data. <strong>Get ready to GWAS!</strong>
 </p>
 
 <h3>Topics Covered</h3>
@@ -28,7 +28,7 @@
 <p>To engage with this content, you should:</p>
 <ol>
     <li>Download and update your <strong>RStudio</strong> to the most current version.</li>
-    <li>Install the necessary R packages.</li>
+    <li>Clone this repository to your local device.</li>
     <li>
         (Optional) Read the following scientific literature related to Genome-Wide Association Studies and Multiple Testing:
         <ul>
@@ -37,8 +37,8 @@
             Statistical Significance in Whole-Genome Sequencing-Based Association Studies (Genetic Epidemiology)</a></li>
         </ul>
     </li>
-    <li>Download, read, and run <strong>GenomeWideAssociation.qmd</strong></li>
-    <li>Download, read, and run <strong>MultipleTesting.qmd</strong></li>
+    <li>Read and run <strong>GenomeWideAssociation.qmd</strong></li>
+    <li>Read and run <strong>MultipleTesting.qmd</strong></li>
 </ol>
 <p>Once these steps are complete, congratulate yourself on gaining these new skills!</p>
 
