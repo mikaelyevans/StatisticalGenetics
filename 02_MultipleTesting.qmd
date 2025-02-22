@@ -1,5 +1,109 @@
 ---
-title: "MultipleTesting"
-format: html
+title: "Multiple Testing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-tools: true
 ---
+
+# What is Multiple Testing?
+
+## Background Information
+
+In Genome-Wide Association Studies, scientists have to account for the phenomenon of **multiple testing**, where testing thousands of related hypotheses increases the likelihood of false positive results, also known as type 1 errors. A way for scientists to measure this likelihood of type 1 error in their studies is the **Family-Wise Error Rate** (FWER). The FWER represents the probability of declaring at least one false positive result when conducting multiple statistical tests simultaneously on a set of related hypotheses. Scientists must reduce the FWER, otherwise associations in the study may appear statistically significant by chance alone. To ensure the validity of published results, researchers use methods such as the **Bonferroni correction**, **False Discovery Rate** (FDR), and **Simulation** to reduce the FWER. In this content summary, we will examine the use of the Bonferroni correction on multiple testing.
+
+## The Bonferroni Correction
+
+As mentioned earlier, using the standard p-value threshold of 0.05 is not always acceptable when testing multiple hypotheses at a time. To examine the Bonferroni correction, we will create a dataset with 165 observations and 83 independent SNPs each with a MAF of 10%. The Bonferroni correction sets the significance threshold equal to the desired FWER divided by the number of hypotheses tested. Here, we would like to have a FWER of 0.05 across all 83 SNPs tested. 
+
+$$
+\begin{align}
+{\text{Bonferroni correction}}=\frac{\text{FWER}}{\text{\# tests}} &= \frac{0.05}{83} \approx 0.000602
+\end{align}
+$$
+
+
+To assess the Bonferroni correction, we will use a simulation to assign *cases* and *controls* to the data so we can compare error rates while knowing that in reality, none of the 83 SNPs are associated with our trait. This content summary will compare results with the implementation of the Bonferroni correction to results with the standard 0.05 p-value threshold.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r, include=FALSE}
+#| eval: false
+install.packages('NatParksPalettes')
+```
+
+```{r, include=FALSE}
+#| message: false
+library(tidyverse) # for data wrangling tools
+library(broom) # for tidy model output
+library(snpStats) # for reading in PLINK data
+library(NatParksPalettes) # for fun color palettes
+```
+
+```{r simulate-data}
+# function to simulate one genetic variant
+sim_one_variant <- function(n_ppl, MAF){
+  snp <- rbinom(n = n_ppl, size = 2, p = MAF)
+  return(snp)
+}
+
+# replicate 83 times to create 83 independent SNPs
+# use a sample size of 165 and MAF of 10%
+# set seed so we all get the same results
+set.seed(494)
+snps <- replicate(83, sim_one_variant(n_ppl = 165, MAF = 0.1))
+```
+
+```{r}
+# create a helper function to easily repeat sim with different thresholds
+do_one_fwer_sim <- function(thresh){
+  # simulate null trait
+  y <- rnorm(n = 165, mean = 0, sd = 1)
+  # implement GWAS
+  pvals <- c()
+  for(i in 1:83){
+    mod <- lm(y ~ snps[,i])
+    pvals[i] <- tidy(mod)$p.value[2]
+  }
+  # check if any pvals are < threshold
+  any(pvals < thresh) # swap out 0.05 in sim above for generic threshold
+}
+```
+
+Assess 0.05 significance threshold
+```{r}
+#| cache: true
+set.seed(494)
+replicate(500, do_one_fwer_sim(thresh = 0.05)) %>%
+  mean()
+```
+
+Assess Bonferroni threshold
+```{r}
+#| cache: true
+set.seed(494)
+replicate(500, do_one_fwer_sim(thresh = 0.05/83)) %>%
+  mean()
+```
+
+This assessment has shown that the use of the 0.05 significance threshold provides a 98.6% error rate, while the Bonferroni corrected significance threshold provides a 5.8% error rate. Bonferroni corrections are extremely helpful to statistical studies and are an essential step in genetic data analysis. If you are interested in multiple testing and the other methods used to reduce FWER, the paper [Resetting the Bar: Statistical Significance in Whole-Genome Sequencing-Based Association Studies](https://onlinelibrary.wiley.com/doi/abs/10.1002/gepi.22032?casa_token=kFg4MxX9bcAAAAAA%3Ad4pm84GuKhg10-6s3v13H_zecf1oqeCMkbwkxHHnC1q80-gSnmF__FF2YGVXbGZFKtURKB5DG0ujOGk) is a useful resource published in the journal Genetic Epidemiology.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

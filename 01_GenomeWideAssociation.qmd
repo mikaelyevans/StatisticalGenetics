@@ -1,6 +1,11 @@
 ---
 title: "Genome-Wide Association Studies"
-format: html
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-tools: true
 ---
 
 # What is a Genome-Wide Association Study?
@@ -9,10 +14,13 @@ format: html
 The human genome is very fascinating! The genome consists of all of a person's DNA, and scientists have been studying it for many years. Across all humans, our DNA is very similar, but there are certain regions on the genome that are known to differ from person to person. These regions are called **genetic variants** and they are useful in studying what makes us genetically different from one another. There are multiple types of genetic variants, but Genome-Wide Association Studies use **Single Nucleotide Variants**, or SNVs, which are single nucleotide changes in the DNA sequence. These genetic variants can give scientists insights into a person's inherited traits, diseases, and ancestry.
 \
 \
-**Genome-Wide Association Studies**, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at **Single Nucleotide Polymorphisms**, or SNPs, on the genome of *cases* (people expressing the trait of interest) and *controls* (people without the trait of interest) to declare if the nucleotides at that position are associated with possession of the trait of interest. SNPs differ from SNVs because they represent a variation that is present in at least 1% of the population. Once scientists have identified genetic variants that **are** associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be **life saving** when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.
+**Genome-Wide Association Studies**, or GWAS are used find genetic variants that are significantly associated with the trait of interest by testing thousands of genetic variants across the entire genome. To test a genetic variant, scientists look at **Single Nucleotide Polymorphisms**, or SNPs, on the genomes of *cases* (people expressing the trait of interest) and *controls* (people without the trait of interest) to declare if the nucleotides at that SNP position are associated with possession of the trait of interest. SNPs differ from SNVs because they represent a variation that is present in at least 1% of the population. 
 \
 \
-The supplementary article [Genome-Wide Association Study of 14,000 Cases of Seven Common Diseases and 3,000 Shared Controls (Nature)](https://www.nature.com/articles/nature05911) was an innovative paper that defined common protocols for implementing GWAS for scientific studies. This paper is a foundation of the GWAS and was made possible by developments in DNA sequencing, allowing the analysis of 500,000 SNVs per individual.
+Once scientists have identified genetic variants that **are** associated with a particular trait of interest, they can observe this genetic variant in new subjects to determine if the subject may have inherited the genes for the trait of interest. This practice can be **life saving** when used in medical contexts because it can provide individuals with a proactive approach to their health before an official diagnosis and ensure that individuals can prepare for the treatment they need.
+\
+\
+The supplementary article [Genome-Wide Association Study of 14,000 Cases of Seven Common Diseases and 3,000 Shared Controls (Nature)](https://www.nature.com/articles/nature05911) was an innovative paper that defined common protocols for implementing GWAS for scientific studies. This paper is a foundation of the GWAS and was made possible by developments in DNA sequencing, allowing the analysis of 500,000 SNPs across the entire genome of each individual.
 
 # Implementing a Genome-Wide Association Study
 
@@ -235,7 +243,7 @@ To interpret this plot, we see only one spike signifying one significant peak in
 
 ### Conclusion
 
-You now have the skills to implement a Genome-Wide Association Study and plot your findings! In order to implement this on all chromosomes, follow the same code, but do not filter to only select SNPs on chromosome 1. This will allow you to loop through all the SNPs on all the chromosomes and may take up to 30 minutes to run!
+You now have the understanding and skills to implement a Genome-Wide Association Study and plot your findings! In order to implement this on all chromosomes, follow the same code, but do not filter to only select SNPs on chromosome 1. This will allow you to loop through all the SNPs on all the chromosomes and may take up to 30 minutes to run!
 
 
 
