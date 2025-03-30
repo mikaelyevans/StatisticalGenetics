@@ -35,8 +35,8 @@
 <li><a href="https://www.cell.com/ajhg/fulltext/S0002-9297(14)00476-5?theme=Untitled%2Cmontraykreyol.org%2Farticle%2F%7B-%7D%3Ftheme%2Cmontraykreyol.org%2C0.016772065"> The Genetic Ancestry of African Americans, Latinos, and European Americans Across the United States (American Journal of Human Genetics)</a></li>
         </ul>
     </li>
-    <li>Read and run <strong>01_GenomeWideAssociation.qmd</strong></li>
-    <li>Read and run <strong>02_MultipleTesting.qmd</strong></li>
+    <li>Read <strong>01_LiteratureReview.md</strong></li>
+    <li>Read and run <strong>02_PrincipalComponentAnalysis.qmd</strong></li>
 </ol>
 <p>Once these steps are complete, congratulate yourself on gaining these new skills!</p>
 

@@ -1,0 +1,205 @@
+---
+title: "Principal Component Analysis"
+author: "Mikaely Evans"
+format: html
+---
+
+# Principal Component Analysis in Genetics
+
+## What is PCA?
+
+Principal Component Analysis (PCA) is a statistical method used to simplify complex data by reducing its dimensions while preserving as much variation as possible. It creates new variables, called principal components, that capture patterns in the data. These components are ranked, with the first principal component (PC) representing the most variation.
+\
+\
+PCA is especially useful for genetic data, where it helps researchers account for confounding variables, like population structure, in genetic studies. By controlling for these variations, PCA improves the accuracy of analyses and results.
+\
+\
+In this tutorial, we will first walk through an example showing how application of PCA can improve accuracy of results in a simulated Genome Wide Association Study. Next, there will be an example of applying PCA to real genetic data and code demonstrating common useful visualizations in statistical genetics.
+
+
+
+### Set Up
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r}
+#| message: false
+library(tidyverse)
+library(broom)
+library(dplyr)
+library(tidyr)
+library(GGally)
+library(gridExtra)
+```
+
+### Exploring the data
+
+This is data downloaded from Professor Macalester College's statgen GitHub page that offers many statistical data sets. It contains simulated genetic data of 1,000 individuals and 15 SNPs. Run the following chunks of code to download the data and examine its dimensions and minor allele frequencies.
+
+```{r, message=FALSE}
+pcadata <- read_csv('https://mac-stat.github.io/statgen/data/pca_toy_data.csv')
+```
+
+```{r}
+dim(pcadata)
+colnames(pcadata)
+```
+
+```{r}
+pcadata %>%
+  group_by(population) %>%
+  count()
+```
+
+<strong>Minor Allele Frequency </strong> (MAF) is the proportion of the less common allele of a genetic variant in a given population. It ranges from 0 to 1, where 0.5 means both alleles are equally common. MAF is important in genetics because it helps identify common and rare variants, which can influence traits, diseases, and population structure. MAF can be used to ensure analyses focus on variants with meaningful frequency differences across populations. Here are the minor allele frequencies for each SNP across the two populations in the study:
+
+```{r, warning = FALSE}
+pcadata %>%
+  group_by(population) %>%
+  summarise(across(starts_with("SNP"), mean, na.rm = TRUE)/2)
+```
+
+<strong>Some things to notice:</strong> \
+- SNP 1 and SNP 2 only occur in population 2 \
+- SNPs 1 - 5 are distinctly more common in population 2 than 1. \
+- SNPs 6 - 15 have relatively the same allele frequency in both populations. \
+
+Next, we will run a PCA on this data to see if it can help us reduce confounding!
+
+# Run PCA
+
+Run the code chunks in order to complete Principal Component Analysis and to reduce the dimensions of the data!
+
+```{r}
+# Remove unnecessary columns
+geno <- pcadata %>%
+  select(-trait, -population)
+
+# use prcomp function to perform PCA
+pca_out <- prcomp(geno, center = TRUE, scale = TRUE)
+```
+
+In PCA, scores and loadings help interpret the transformation of data into principal components.
+
+<strong>PCA Scores</strong> are the transformed coordinates of the original data in the new principal component space. Each data point gets a score for each principal component, showing how much it contributes to that PC.
+
+<strong>PCA Loadings</strong> indicate how much each original variable contributes to a principal component. They show the relationship between the original variables and the new components, helping interpret what each principal component represents. High loadings suggest strong influence on a particular PC.
+
+```{r}
+# Extract scores and loadings
+pca_loadings <- pca_out$rotation
+pca_scores <- pca_out$x
+```
+
+Here is a visualization of the scores of the first two PC's in the PCA: 
+
+```{r}
+pca_scores_pop <- pcadata %>% select(population) %>% bind_cols(pca_scores)
+pca_scores_pop %>%
+  ggplot() +
+  geom_point(aes(x = PC1, y = PC2, color = as.factor(population)))
+```
+
+As you can see, PCA has distinctly clustered the two populations. There is more variation in the populations across the first PC, as expected, while in the second PC, the scores spread across the same values.
+
+Next, we will plot the loadings of the first PC:
+
+```{r}
+pca_loadings <- pca_loadings %>%
+  as.data.frame() %>%
+  mutate(SNP = row_number())
+pca_loadings %>%
+  select(PC1, SNP) %>%  # select another PC to visualize its loadings
+  ggplot(aes(x = as.factor(SNP), y = PC1, fill = SNP)) +
+    geom_bar(stat = "identity") +
+    labs(y = "loadings", x = "SNP", fill = "original features")
+```
+
+This loadings plot shows that the first two SNPs contribute the most positively to explaining the variation in the first PC. This is intiutive because the minor allele in the first two SNPs only occurrs in population 2, making occurrence of a minor allele in SNP 1 or 2 an easy way to classify the populaitons.
+
+However, *correlated SNPs* are SNPs that show statistical association with each other, meaning their allele frequencies tend to change together in a population. This correlation often arises due to linkage disequilibrium (LD), where nearby genetic variants are inherited together rather than assorting independently. It is likely that SNPs 1 and 2 may be correlated since they can only be passed through inheritance in the second population. Keep this in mind for later. 
+
+Finally, we will extract the variance of each PC and calculate the proportion of variance explained by that PC. We will use this to create a visualization that shows the variance explained by each PC which will help us decide how many PCs are important to include in our analysis to reduce confounding.
+
+```{r}
+# extract variance of each PC
+pca_var <- (pca_out$sdev)^2
+
+# calculate proportion of variance explained
+total_var <- sum(pca_var)
+pve <- pca_var/total_var
+pca_out$pve <- c(pve)
+```
+
+```{r}
+# visualize
+pca_out %>% 
+  tidy(matrix = "eigenvalues") %>% 
+  ggplot(aes(y = pve, x = PC)) + 
+    geom_point(size = 2) + 
+    geom_line() + 
+    labs(y = "% of variance explained")
+```
+
+### Conduct a Genome Wide Association Study
+
+Next, we will conduct a GWAS to give us grounds for comparison in results with and without PCA adjustment. Run the code below for the GWAS without PCA:
+
+```{r}
+pvals <- c()
+genot <- pcadata %>%
+  select(-population)
+
+# loop through each of the 15 SNPs
+for(i in 2:16){
+  mod <- lm(trait ~ genot[[i]], data = genot) # fit model looking at SNP i
+  pvals[i] <- tidy(mod)$p.value[2] # record p-value
+}
+pvals %>%
+  as.data.frame()
+
+
+mod <- lm(trait ~ genot[[2]], data = genot) # fit model looking at SNP i
+  pvals[i] <- tidy(mod)$p.value[2] # record p-value
+```
+
+These results show that p-values for the first 3 SNPs are incredibly significant, the 4th and 5th SNPs are somewhat significant, and the rest of the SNPs are relatively insignificant in comparison. This follows what we should expect to see since we originally noted the same patterns in these SNPs minor allele frequencies across populations.
+
+Now, for comparison, run the code for a GWAS that adjusts with PCA:
+
+```{r}
+pvals2 <- c()
+pca_scores1 <- pca_scores %>%
+  as.data.frame() %>%
+  select(PC1)
+genotpc1 <- pcadata %>%
+  select(-population) %>%
+  cbind(pca_scores1)
+
+# loop through each of the 15 SNPs
+for(i in 2:16){
+  mod2 <- lm(trait ~ genotpc1[[i]] + PC1, data = genotpc1) # fit model looking at SNP i
+  pvals2[i] <- tidy(mod2)$p.value[2] # record p-value
+}
+
+pvals2 %>%
+  as.data.frame()
+```
+
+Now, the p-values are much more consistent which suggests that the correlation between some of the SNPs has been removed. The integration of the first PC removes these known contributions of SNPs 1 and 2 to provide uncorrelated results. This produces more accurate GWAS results that show SNP 3 as very significant and uncorrelated.
+
+### Confounding
+
+While PCA helps account for correlated SNPs, scientists need to consider confounding. Suppose $Y$ is our outcome variable and $X$ is our predictor of interest. A third variable, $Z$, **confounds** the relationship between $X$ and $Y$ if it is a common cause of both the outcome variable $Y$ and predictor of interest $X$.
+
+In the context of this analysis, population membership is a common cause of both posessing the trait of interest and posessing the minor alleles.
+
+
+
+
+
+
+
+
+
