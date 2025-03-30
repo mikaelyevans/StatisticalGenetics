@@ -22,5 +22,5 @@ A way to combat this categorization is to instead look at ancestry geographicall
 	Observational data introduces confounding variables, or variables that influence both the dependent variable and predictor of interest. Confounding variables can introduce Type 1 Error, false positive results, and make scientific study statistics inaccurate. Some of these examples include population structure, familial relationships, and more. In this content summary, we will focus on how population structure as a confounding variable can be accounted for in genome wide analysis studies. 
 </p>
 <p>
-	In the following Qmd, we will go through an example of using <strong>Principal Component Analysis</strong> in a GWAS to adjust for population structure. There will be examples of visualizations that are commonly used in this field including QQ plots and PCA Loadings and Scree plots. Enjoy!
+	In the <strong>02_PrincipalComponentAnalysis</strong> Qmd, we will go through an example of using <strong>Principal Component Analysis</strong> in a GWAS to adjust for population structure. There will be examples of visualizations that are commonly used in this field including QQ plots and PCA Loadings and Scree plots. Enjoy!
 </p>

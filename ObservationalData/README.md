@@ -42,8 +42,10 @@
 
 <h3>Important Terminology</h3>
 <ul>
-    <li>Nucleotide - structural unit of DNA</li>
     <li>Gene - a sequence of nucleotides that construct proteins that make up people</li>
-    <li>Chromosome - a unit of many genes that are inherited from parents, people have 23 pairs of them</li>
     <li>Genome - the entirety of all of the genes on all the chromosomes of a person</li>
+    <li>Ancestry - information about family and biological descendance</li>
+    <li>Race - a group of people who share physical, cultural, and social similarities</li>
+    <li>Ethnicity - a group of people who share a common cultural background or ancestry</li>
+    
 </ul>
