@@ -357,8 +357,9 @@ plot(pc.percent, xlim = c(0,50))
 
 This scree plot shows the PCs in our analysis and how much variance they each explain. As you can see, the first two PCs contribute to more explanation of variance than the rest of the PCs in this analysis and lead me to adjust for PC1 and PC2 in my GWAS.
 
+## Conclusion
 
-
+Thank you for following along with this tutorial. I hope you enjoyed learning about observational data, PCA, confounding variables, and ethics in genetics! 
 
 
 
