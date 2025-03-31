@@ -191,6 +191,39 @@ pvals2 %>%
 
 Now, the p-values are much more consistent which suggests that the correlation between some of the SNPs has been removed. The integration of the first PC removes these known contributions of SNPs 1 and 2 to provide *uncorrelated results*. This data was simulated such that the trait of interest depends on SNP 3 and population. The implementation of PCA produces more accurate GWAS results that show SNP 3 as very significant and uncorrelated, which is what we expect to see in this simulation.
 
+### QQ Plots
+
+QQ plots in a Genome Wide Association Study show how the observed p-values compare to the expected p-values under the null hypothesis. The red line shows the expected uniform distribution which is the pattern we would expect to see if there are no significant genetic associations in the data. The blue points show our observed distribution of p-values. Since these points deviate significantly from the expected uniform distribution, we can confidently say that some SNPs in our study are significantly associated with our trait of interest.
+
+```{r}
+qqplot(-log10(ppoints(length(pvals2))), -log10(sort(pvals2)),
+       main = "QQ Plot of P-values", 
+       xlab = "Expected -log10(p)", 
+       ylab = "Observed -log10(p)",
+       pch = 16, col = "blue")
+abline(0, 1, col = "red", lwd = 2)
+```
+
+The **inflation factor** (λ) is a scalar that is used to account for inflation in the p-values. It reflects how much the test statistics deviate from what would be expected under the null hypothesis. An inflation factor greater than 1 indicates that the observed p-values are smaller than expected, which could be due to confounding factors that are discussed in the following section. The code below shows how to find this inflation factor from your results:
+
+```{r}
+pvals1_clean <- as.data.frame(pvals)[-1,]
+pvals2_clean <- as.data.frame(pvals2)[-1,]
+
+chi_squared_values1 <- qchisq(1 - pvals1_clean, df = 1)
+chi_squared_values2 <- qchisq(1 - pvals2_clean, df = 1)
+
+# Calculate the inflation factor (λ)
+expected_chi_squared_values <- qchisq(0.5, df = 1)
+lambda1 <- median(chi_squared_values1) / median(expected_chi_squared_values)
+lambda2 <- median(chi_squared_values2) / median(expected_chi_squared_values)
+
+lambda1
+lambda2
+```
+
+Here, we can compare the inflation of p-values in the GWAS before and after PCA adjustment. We see that the inflation factor (λ) for the unadjusted p-values is 8.29, while the inflation factor for the PCA adjusted p-values is 7.59. While these both indicate p-value inflation, adjusting for the first two PCs was helpful in reducing this inflation and producing more accurate results. The section below discusses confounding and other pre-processing steps to further deflate the p-values.
+
 
 ### Confounding
 
@@ -210,6 +243,7 @@ BiocManager::install("SNPRelate")
 
 library(SNPRelate)
 ```
+
 
 The SNPRelate package provides some real example genetic data, we will save it as a genotype file here:
 
