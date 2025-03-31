@@ -5,20 +5,20 @@
 
 <h3>Observational Data</h3>
 <p>
-    Data comes in many different forms. In science, there are two main types of data: observational and experimental. Observational data is taken from real-world observations that have not been altered by a scientific experiment. On the contrary, experimental data comes from scientific experiments that have independent variables that the scientist has control to change. In genetics, observational data is the most common data format because there is no ethical way to change a human’s DNA for the purpose of scientific study, since this would involve introducing mutations that could alter a person’s disease inheritance, physical qualities, and genetic ancestry.
+    Data comes in many different forms. In science, there are two main types of data: observational and experimental. Observational data is taken from real-world observations that have not been altered by a scientific experiment. On the contrary, experimental data comes from scientific experiments that have independent variables that the scientist has control to change. In genetics, <strong>observational data</strong> is the most common data format because there is no ethical way to change a human’s DNA for the purpose of scientific study, since this would involve introducing mutations that could alter a person’s disease inheritance, physical qualities, and genetic ancestry.
 </p>
 
 <p>    
     While it is amazing that scientists can use observational data to study genetics, observational data comes with its own unique set of challenges. This content summary explains the approaches that scientists use to analyze observational genetic data and why they are effective.
-    There is also a step by step example that demonstrates the processes of working with observational data including PCA and GWAS.
+    There is also a step by step example that demonstrates the processes of working with observational data in a Genome Wide Association Study that compensates for the challenges of observational data through implementing a Principal Component Analysis.
 </p>
 
 <h3>Topics Covered</h3>
 <ul>
+    <li>Ethics of Genetic Studies</li>
     <li>Observational Data</li>
     <li>Confounding Variables</li>
     <li>Adjusting for Population Structure</li>
-    <li>Bias and Variance of Estimators</li>
 </ul>
 
 <h3>How to Follow Along</h3>
@@ -27,7 +27,7 @@
     <li>Download and update your <strong>RStudio</strong> to the most current version.</li>
     <li>Clone this repository to your local device.</li>
     <li>
-        (Optional) Read the following scientific literature related to Observational Data and Population Structures:
+        (Optional) Read the following scientific literature related to Observational Data and Ancestry:
         <ul>
             <li><a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1008624">What is Ancestry? (PLOS Genetics)</a></li>
             <li><a href="https://nap.nationalacademies.org/catalog/26902/using-population-descriptors-in-genetics-and-genomics-research-a-new"> Using Population Descriptors in Genetics and Genomics Research (National Academies)</a></li>

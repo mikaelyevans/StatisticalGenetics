@@ -62,8 +62,8 @@ pcadata %>%
 
 <strong>Some things to notice:</strong> \
 - SNP 1 and SNP 2 only occur in population 2 \
-- SNPs 1 - 5 are distinctly more common in population 2 than 1. \
-- SNPs 6 - 15 have relatively the same allele frequency in both populations. \
+- SNPs 1 - 5 are distinctly more common in population 2 than 1 \
+- SNPs 6 - 15 have relatively the same allele frequency in both populations \
 
 Next, we will run a PCA on this data to see if it can help us reduce confounding!
 
@@ -144,7 +144,9 @@ pca_out %>%
 
 ### Conduct a Genome Wide Association Study
 
-Next, we will conduct a GWAS to give us grounds for comparison in results with and without PCA adjustment. Run the code below for the GWAS without PCA:
+Next, we will conduct a GWAS to allow us to see SNP results with and without PCA adjustment.
+
+Run the code below for the GWAS *without PCA*:
 
 ```{r}
 pvals <- c()
@@ -164,9 +166,9 @@ mod <- lm(trait ~ genot[[2]], data = genot) # fit model looking at SNP i
   pvals[i] <- tidy(mod)$p.value[2] # record p-value
 ```
 
-These results show that p-values for the first 3 SNPs are incredibly significant, the 4th and 5th SNPs are somewhat significant, and the rest of the SNPs are relatively insignificant in comparison. This follows what we should expect to see since we originally noted the same patterns in these SNPs minor allele frequencies across populations.
+These results show that p-values for the first 3 SNPs are incredibly significant, the 4th and 5th SNPs are somewhat significant, and the rest of the SNPs are relatively insignificant in comparison. This follows what we should expect to see since we originally noted the same patterns in these SNPs minor allele frequencies across populations. *But, are we sure that the first two SNPs are uncorrelated predictors?*
 
-Now, for comparison, run the code for a GWAS that adjusts with PCA:
+Now, for comparison, run the code for a GWAS that adjusts *with PCA*:
 
 ```{r}
 pvals2 <- c()
@@ -187,14 +189,139 @@ pvals2 %>%
   as.data.frame()
 ```
 
-Now, the p-values are much more consistent which suggests that the correlation between some of the SNPs has been removed. The integration of the first PC removes these known contributions of SNPs 1 and 2 to provide uncorrelated results. This produces more accurate GWAS results that show SNP 3 as very significant and uncorrelated.
+Now, the p-values are much more consistent which suggests that the correlation between some of the SNPs has been removed. The integration of the first PC removes these known contributions of SNPs 1 and 2 to provide *uncorrelated results*. This data was simulated such that the trait of interest depends on SNP 3 and population. The implementation of PCA produces more accurate GWAS results that show SNP 3 as very significant and uncorrelated, which is what we expect to see in this simulation.
+
 
 ### Confounding
 
 While PCA helps account for correlated SNPs, scientists need to consider confounding. Suppose $Y$ is our outcome variable and $X$ is our predictor of interest. A third variable, $Z$, **confounds** the relationship between $X$ and $Y$ if it is a common cause of both the outcome variable $Y$ and predictor of interest $X$.
 
-In the context of this analysis, population membership is a common cause of both posessing the trait of interest and posessing the minor alleles.
+In the context of this analysis, population membership is a common cause of both possessing the trait of interest and possessing the minor alleles. This occurs because inheritance and ancestry in this population cause the trait to be more common, and expression of the trait is also causally associated with this inheritance.
 
+## Application to real genetic data
+
+To begin the application of PCA to real genetic data, install the *SNPRelate* package that allows us to implement PCA much more efficiently.
+
+```{r, message = FALSE, warning = FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("SNPRelate")
+
+library(SNPRelate)
+```
+
+The SNPRelate package provides some real example genetic data, we will save it as a genotype file here:
+
+```{r}
+genofile <- snpgdsOpen(snpgdsExampleFileName())
+genofile
+```
+
+This example file contains 279 individuals that have been assessed across 9,088 SNPs. There are several populations represented in this study, let's examine this below:
+
+```{r}
+pop_code <- read.gdsn(index.gdsn(genofile, path="sample.annot/pop.group"))
+table(pop_code)
+```
+
+Here are the unabbreviated population groups:
+
+- CEU: Central European
+- HCB: Chinese
+- JPT: Japanese
+- YRI: West African
+
+Next, we will use the `snpgdsLDpruning` function from SNPRelate to perform a pre-processing step known as "LD pruning". This function calculates the correlation, or linkage disequilibrium, between SNPs and removes one of the two SNPs from every pair of highly correlated SNPs to produce an uncorrelated data set. 
+
+This function takes in a genotype file and a linkage disequilibrium threshold to determine which SNPs should be removed. It uses randomness to select positions along the chromosomes and assesses the linkage between the neighboring SNPs, and for this reason it is necessary to use the set.seed() function to proceed with continuous and replicable results.
+
+```{r}
+set.seed(494)
+snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2)
+```
+
+Before LD pruning, the data set contained 9,088 SNPs, and now, it now contains 6,460 uncorrelated SNPs. Now, we will perform a PCA on this data to reinforce use of uncorrelated data.
+
+```{r}
+snpset.id <- unlist(unname(snpset))
+head(snpset.id)
+pca <- snpgdsPCA(genofile, snp.id=snpset.id, num.thread=2)
+pc.percent <- pca$varprop*100
+head(round(pc.percent, 2))
+tab <- data.frame(sample.id = pca$sample.id,
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    stringsAsFactors = FALSE)
+
+```
+
+### Selecting PCs
+
+In the simulated data example above, we focused on the first two principal components (PCs), as they captured the most variation in the dataset. The number of PCs to include in an analysis is not fixed and depends on the scientist's interpretation. While incorporating more PCs can help explain additional variation, doing so eventually becomes computationally expensive and may not benefit your results. The 4 plots below can guide you in determining the optimal number of PCs to include in your analysis. I will talk through my personal decision making for each plot to give some insight into this process as well.
+
+**1. Score Plot**
+
+```{r}
+# Get sample id
+sample.id <- read.gdsn(index.gdsn(genofile, "sample.id"))
+
+# Get population information
+#   or pop_code <- scan("pop.txt", what=character())
+#   if it is stored in a text file "pop.txt"
+pop_code <- read.gdsn(index.gdsn(genofile, "sample.annot/pop.group"))
+
+# Make a data.frame
+tab <- data.frame(sample.id = pca$sample.id,
+    pop = factor(pop_code)[match(pca$sample.id, sample.id)],
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    stringsAsFactors = FALSE)
+
+plot(tab$EV2, tab$EV1, col=as.integer(tab$pop), xlab="eigenvector 2", ylab="eigenvector 1")
+
+legend("bottomright", legend=levels(tab$pop), pch="o", col=1:nlevels(tab$pop))
+lbls <- paste("PC", 1:4, "\n", format(pc.percent[1:4], digits=2), "%", sep="")
+
+pairs(pca$eigenvect[,1:4], col=tab$pop, labels=lbls)
+```
+
+In this score plot, the data points are colored by their populations. Hopefully, you notice that the points form clusters within their populations which indicates similarities within the data set. The percentages under the PC labels show the percent of variance explained by each respective PC. Here, PC1 describes 10.27% of the variance, PC2 describes 5.59%, PC3 describes 1.03%, and PC3 describes 0.98%. These percentage of variance explained values can help make an informed decision about how many PC's to include. Since PC3 only explains 1.03% of the variance, I would only include PC1 and PC2 from this PCA in my analysis.
+
+
+**2. Parallel Coordinates Plot**
+
+```{r, message=FALSE}
+library(MASS)
+datpop <- factor(pop_code)[match(pca$sample.id, sample.id)]
+parcoord(pca$eigenvect[,1:16], col=datpop)
+```
+
+The parallel coordinates plot shows the PC's on the x-axis and each line represents an individual in the study, colored by the population they belong to. The y-axis represents the values for each PC, a higher position indicating more influence on that PC. From this parallel coordinates plot, I can tell that the first two PCs show a strong structure within the data set because the population groups are relatively distinct. After the first two PCs, there is less meaningful variation in the observations because individuals in all populations seem to follow similar trends. Again, my decision based on this plot would be to keep the first two PC's.
+
+**3. Loadings Plot**
+
+```{r}
+chr <- read.gdsn(index.gdsn(genofile, "snp.chromosome"))
+LOAD <- snpgdsPCASNPLoading(pca, genofile)
+savepar <- par(mfrow=c(2,1), mai=c(0.45, 0.55, 0.1, 0.25))
+for (i in 1:2)
+{
+    plot(abs(LOAD$snploading[i,]), ylim=c(0,0.1), xlab="", ylab=paste("PC", i),
+        col=chr, pch="+")
+}
+```
+
+This loadings plot displays the SNP loadings from the PCA we conducted earlier. The plot shows first two PC's, with PC 1 on the top and PC2 on the bottom. The y-axis represents each SNP in the analysis and the x-axis represents the loading value for that SNP. From this plot, we can see that there are not many outliers in PC1, but there are several SNPs on chromosome 1 and 2 that contribute to PC2. This plot is not necessarily useful for selecting PCs to retain in our GWAS, but it does give us additional information into where the most influential SNPs are located.
+
+**4. Scree Plot**
+
+```{r}
+pc.percent <- pca$varprop
+plot(pc.percent, xlim = c(0,50))
+```
+
+This scree plot shows the PCs in our analysis and how much variance they each explain. As you can see, the first two PCs contribute to more explanation of variance than the rest of the PCs in this analysis and lead me to adjust for PC1 and PC2 in my GWAS.
 
 
 
